@@ -2,7 +2,7 @@ package result
 
 import "fmt"
 
-// Result[T] is a type that represents either a value of type T or an error.
+// Result is a type that represents either a value of type T or an error.
 type Result[T any] struct {
 	value T
 	err   error
@@ -59,12 +59,14 @@ func (r *Result[T]) Err() *error {
 }
 
 // Map maps the value if the result is ok, otherwise returns the error.
-func (r *Result[T]) Map(f func(T) T) *Result[T] {
+// FIXME
+func (r *Result[T]) Map(f func(*T)) error {
 	if r.IsErr() {
-		return r
+		return r.err
 	}
 
-	return &Result[T]{value: f(r.value)}
+	f(&r.value)
+	return nil
 }
 
 // MapOr maps the value if the result is ok, otherwise returns the given value.
@@ -135,4 +137,14 @@ func (r *Result[T]) Unwrap() T {
 	}
 
 	return r.value
+}
+
+// UnwrapErr returns the error if the result is an error, otherwise panics.
+func (r *Result[T]) UnwrapErr() error {
+	if r.IsOk() {
+		msg := fmt.Sprintf("called `Result[T].UnwrapErr()` on an `Ok` value: %v", r.value)
+		panic(msg)
+	}
+
+	return r.err
 }
